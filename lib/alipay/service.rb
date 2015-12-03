@@ -94,6 +94,33 @@ module Alipay
       request_uri(params, options).to_s
     end
 
+    # 支付宝即时到帐批量退款无密接口
+    CREATE_REFUND_NOPWD_URL_REQUIRED_PARAMS = %w( batch_no data notify_url )
+    def self.refund_fastpay_by_platform_nopwd_url(params, options = {})
+      params = Utils.stringify_keys(params)
+      check_required_params(params, CREATE_REFUND_NOPWD_URL_REQUIRED_PARAMS)
+
+      data = params.delete('data')
+      detail_data = data.map do|item|
+        item = Utils.stringify_keys(item)
+        "#{item['trade_no']}^#{item['amount']}^#{item['reason']}"
+      end.join('#')
+
+      params = {
+        'service'        => 'refund_fastpay_by_platform_nopwd',  # 接口名称
+        '_input_charset' => 'utf-8',
+        'partner'        => options[:pid] || Alipay.pid,
+        'seller_user_id' => options[:pid] || Alipay.pid,
+        'refund_date'    => Time.now.strftime('%Y-%m-%d %H:%M:%S'), # 申请退款时间
+        'batch_num'      => data.size,                              # 总笔数
+        'detail_data'    => detail_data                             # 转换后的单笔数据集字符串
+      }.merge(params)
+
+      request_uri(params, options).to_s
+    end
+
+
+
     CREATE_FOREX_SINGLE_REFUND_URL_REQUIRED_PARAMS = %w( out_return_no out_trade_no return_amount currency reason )
     def self.forex_refund_url(params, options = {})
       params = Utils.stringify_keys(params)
